@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legal Case Finder - Powered Legal Assistant</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkgreen: '#192819',
+            beige: '#F5F1E3',
+            accentgreen: '#2F5D50',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- FontAwesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    crossorigin="anonymous"
+  />
+
+  <style>
+    body {
+      background-color: #192819;
+      color: #f5f1e3;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-6 py-12 max-w-4xl">
+    <section
+      class="bg-gradient-to-br from-green-700 to-green-900 rounded-3xl p-10 shadow-2xl"
+    >
+      <!-- Header -->
+      <div class="flex items-center space-x-4 mb-6">
+        <div
+          class="w-16 h-16 bg-beige text-darkgreen rounded-full flex items-center justify-center text-3xl"
+        >
+          <i class="fas fa-gavel"></i>
+        </div>
+        <h1 class="text-4xl font-bold">Legal Document & Case Finder</h1>
+      </div>
+
+      <!-- Description -->
+      <p class="mb-8 text-beige/90 leading-relaxed text-lg">
+        Enter a topic like <strong>Article 21</strong> or <strong>Property Dispute</strong>, and get instant access to related judgments, citations, and documents.
+      </p>
+
+      <!-- Search Input -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          id="keywordInput"
+          type="text"
+          placeholder="Type your legal topic..."
+          class="flex-1 px-4 py-3 rounded-md bg-accentgreen text-beige placeholder-beige/70 border border-beige/50 focus:outline-none focus:ring-2 focus:ring-accentgreen"
+        />
+        <button
+          id="searchBtn"
+          class="bg-beige text-darkgreen px-6 py-3 rounded-md hover:bg-darkgreen hover:text-white transition"
+        >
+          <i class="fas fa-search mr-2"></i> Search
+        </button>
+      </div>
+
+      <!-- Status Text -->
+      <div id="statusText" class="mb-4 hidden text-lg text-beige">
+        🔍 Searching for: '<span id="queryText" class="font-semibold text-beige"></span>'...
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="space-y-6">
+        <!-- Cards will be inserted here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-darkgreen text-beige border-t border-beige px-6 py-8 mt-12 text-center text-sm">
+    © 2025 PLA Inc. All rights reserved.
+  </footer>
+
+  <!-- JS-->
+  <script>
+    const searchBtn = document.getElementById('searchBtn');
+    const keywordInput = document.getElementById('keywordInput');
+    const statusText = document.getElementById('statusText');
+    const queryText = document.getElementById('queryText');
+    const results = document.getElementById('results');
+
+    searchBtn.addEventListener('click', () => {
+      const query = keywordInput.value.trim();
+      if (!query) return;
+
+      results.innerHTML = '';
+      queryText.textContent = query;
+      statusText.classList.remove('hidden');
+
+      fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data) || data.length === 0) {
+            results.innerHTML = `<p class="text-beige/70 text-sm">⚠️ No results found for '<strong>${query}</strong>'.</p>`;
+            return;
+          }
+
+          data.forEach((item, index) => {
+            const badgeColor = {
+              'Judgment': 'bg-green-100 text-green-800',
+              'Writ Petition': 'bg-yellow-100 text-yellow-800',
+              'Citation': 'bg-blue-100 text-blue-800'
+            }[item.type] || 'bg-gray-100 text-gray-800';
+
+            const card = document.createElement('div');
+            card.className = 'p-6 bg-darkgreen border border-beige/30 rounded-lg shadow-sm';
+
+            card.innerHTML = `
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-xl font-semibold text-beige">📄 CASE #${index + 1}: ${item.title}</h3>
+                <span class="text-xs ${badgeColor} px-2 py-1 rounded-full">${item.type}</span>
+              </div>
+              <p class="text-sm text-green-200 break-all">
+                🔗 URL: <a href="${item.url}" target="_blank" class="underline hover:text-beige">${item.url}</a>
+              </p>
+              <div class="mt-2 text-beige/90 text-sm leading-relaxed">
+                📝 <span class="font-medium">Preview:</span><br />
+                ${item.preview}
+              </div>
+            `;
+            results.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          results.innerHTML = `<p class="text-red-400 text-sm">❌ Error fetching results. Please try again later.</p>`;
+        });
+    });
+  </script>
+</body>
+</html>
