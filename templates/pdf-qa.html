@@ -40,27 +40,10 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-  <!-- Header -->
-  <!-- <header class="bg-accentgreen py-6 shadow-lg">
-    <div class="container mx-auto px-6 flex items-center justify-between">
-      <a href="index.html" class="text-3xl font-bold hover:text-beige transition">PLA.</a>
-      <nav class="space-x-6">
-        <a href="index.html#features" class="hover:text-beige transition">Features</a>
-        <a href="index.html#cta" class="hover:text-beige transition">Get Started</a>
-        <a href="index.html#footer" class="hover:text-beige transition">Contact</a>
-      </nav>
-    </div>
-  </header> -->
-
-  <!-- Main Content -->
   <main class="flex-grow container mx-auto px-6 py-12 max-w-4xl">
-    <section
-      class="bg-gradient-to-br from-green-700 to-green-900 rounded-3xl p-10 shadow-2xl"
-    >
+    <section class="bg-gradient-to-br from-green-700 to-green-900 rounded-3xl p-10 shadow-2xl">
       <div class="flex items-center space-x-4 mb-6">
-        <div
-          class="w-16 h-16 bg-beige text-darkgreen rounded-full flex items-center justify-center text-3xl"
-        >
+        <div class="w-16 h-16 bg-beige text-darkgreen rounded-full flex items-center justify-center text-3xl">
           <i class="fas fa-file-pdf"></i>
         </div>
         <h1 class="text-4xl font-bold">PDF Question Answer Chatbot</h1>
@@ -70,23 +53,41 @@
         Upload your PDF documents and ask questions directly. Our AI-powered chatbot will provide precise, context-aware answers extracted from your files.
       </p>
 
-      <!-- Dummy Upload Area -->
-      <div
-        class="border-4 border-dashed border-beige rounded-xl p-12 text-center text-beige/70 hover:text-beige hover:border-accentgreen cursor-pointer transition relative"
-      >
-        <i class="fas fa-upload text-5xl mb-4"></i>
-        <p class="text-lg font-medium">Click or drag and drop your PDF file here</p>
-        <input
+      <!-- Form for file + question -->
+      <form id="pdfQAForm" class="space-y-6" enctype="multipart/form-data">
+        <div>
+          <label for="qa-file" class="block mb-2 font-semibold">Upload PDF File</label>
+          <input
             id="qa-file"
+            name="file"
             type="file"
             accept=".pdf"
-            class="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-            aria-label="Upload PDF"
-/>
+            required
+            class="border rounded px-3 py-2 w-full text-darkgreen"
+          />
+        </div>
 
-      </div>
+        <div>
+          <label for="question" class="block mb-2 font-semibold">Your Question</label>
+          <input
+            id="question"
+            name="question"
+            type="text"
+            required
+            placeholder="Enter your question here"
+            class="border rounded px-3 py-2 w-full text-darkgreen"
+          />
+        </div>
 
-      <!-- Placeholder for chatbot Q&A output -->
+        <button
+          type="submit"
+          class="bg-accentgreen hover:bg-green-800 transition text-beige font-bold py-3 px-6 rounded"
+        >
+          Get Answer
+        </button>
+      </form>
+
+      <!-- Output area -->
       <div
         id="chatbot-output"
         class="mt-8 p-6 bg-beige/10 rounded-lg min-h-[140px] text-beige"
@@ -96,34 +97,38 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="bg-darkgreen text-beige border-t border-beige px-6 py-8 mt-12 text-center text-sm">
     © 2025 PLA Inc. All rights reserved.
   </footer>
-  
- <script>
-    document.getElementById("qa-file").addEventListener("change", async function (event) {
-      const file = event.target.files[0];
-      if (!file) return;
 
-      const question = prompt("Enter your question related to the PDF:");
-      if (!question) return;
+  <script>
+    document.getElementById("pdfQAForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-      const response = await fetch("/pdf-qa", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          question: question,
-          model: "mistralai/Mixtral-8x7B-Instruct-v0.1"
-        })
-      });
-
-      const data = await response.json();
       const output = document.getElementById("chatbot-output");
-      output.innerHTML = `<p class="text-lg">${data.answer}</p>`;
-    });
-</script>
+      output.innerHTML = `<p class="italic text-center">Processing your request...</p>`;
 
+      const form = e.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("/api/pdf-qa", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.answer) {
+          output.innerHTML = `<p class="text-lg whitespace-pre-line">${data.answer}</p>`;
+        } else {
+          output.innerHTML = `<p class="text-red-400">Error: ${data.error || "Unknown error."}</p>`;
+        }
+      } catch (err) {
+        output.innerHTML = `<p class="text-red-400">Request failed. Please check server logs.</p>`;
+      }
+    });
+  </script>
 
 </body>
 </html>

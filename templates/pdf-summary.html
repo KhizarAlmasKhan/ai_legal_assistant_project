@@ -29,6 +29,9 @@
     referrerpolicy="no-referrer"
   />
 
+  <!-- jsPDF library for PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     body {
       background-color: #192819;
@@ -39,18 +42,6 @@
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
-
-  <!-- Header -->
-  <!-- <header class="bg-accentgreen py-6 shadow-lg">
-    <div class="container mx-auto px-6 flex items-center justify-between">
-      <a href="index2.html" class="text-3xl font-bold hover:text-beige transition">PLA.</a>
-      <nav class="space-x-6">
-        <a href="index2.html" class="hover:text-beige transition">Features</a>
-        <a href="index2.html#cta" class="hover:text-beige transition">Get Started</a>
-        <a href="index2.html#footer" class="hover:text-beige transition">Contact</a>
-      </nav>
-    </div>
-  </header> -->
 
   <!-- Main Content -->
   <main class="flex-grow container mx-auto px-6 py-12 max-w-4xl">
@@ -72,7 +63,7 @@
 
       <!-- Dummy Upload Area -->
       <div
-        class="border-4 border-dashed border-beige rounded-xl p-12 text-center text-beige/70 hover:text-beige hover:border-accentgreen cursor-pointer transition"
+        class="border-4 border-dashed border-beige rounded-xl p-12 text-center text-beige/70 hover:text-beige hover:border-accentgreen cursor-pointer transition relative"
       >
         <i class="fas fa-upload text-5xl mb-4"></i>
         <p class="text-lg font-medium">Click or drag and drop your PDF file here</p>
@@ -82,8 +73,7 @@
           accept=".pdf"
           class="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
           aria-label="Upload PDF"
-/>
-
+        />
       </div>
 
       <!-- Placeholder for summary output -->
@@ -94,6 +84,15 @@
         <!-- Summarized text will appear here -->
         <p class="italic text-center">Your summary will appear here.</p>
       </div>
+
+      <!-- Download PDF Button (hidden initially) -->
+      <button
+        id="download-btn"
+        style="display:none;"
+        class="mt-4 px-4 py-2 bg-accentgreen text-white font-semibold rounded hover:bg-green-800"
+      >
+        ⬇️ Download Summary PDF
+      </button>
     </section>
   </main>
 
@@ -103,7 +102,14 @@
   </footer>
 
   <script>
-    document.getElementById("summary-file").addEventListener("change", async function (event) {
+    const { jsPDF } = window.jspdf;
+    const summaryFileInput = document.getElementById("summary-file");
+    const outputDiv = document.getElementById("summary-output");
+    const downloadBtn = document.getElementById("download-btn");
+
+    let currentSummaryData = null; // To hold last fetched summary data
+
+    summaryFileInput.addEventListener("change", async function (event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -111,23 +117,76 @@
       formData.append("file", file);
       formData.append("length", "medium");
 
-      const response = await fetch("/summarize", {
-        method: "POST",
-        body: formData
-      });
+      // Clear previous output and hide download button
+      outputDiv.innerHTML = `<p class="italic text-center">Summarizing...</p>`;
+      downloadBtn.style.display = "none";
 
-      const data = await response.json();
+      try {
+        const response = await fetch("/summarize", {
+          method: "POST",
+          body: formData
+        });
 
-      const outputDiv = document.getElementById("summary-output");
-      outputDiv.innerHTML = `
-        <h3 class="text-lg font-semibold mb-2 text-beige">Summary</h3>
-        <p>${data.summary}</p>
-        <h3 class="text-lg font-semibold mt-4 mb-2 text-beige">Important Clauses</h3>
-        <ul class="list-disc ml-5">${Object.entries(data.clauses).map(([k, v]) => `<li><strong>${k}:</strong> ${v.join("; ")}</li>`).join("")}</ul>
-      `;
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        currentSummaryData = data;
+
+        outputDiv.innerHTML = `
+          <h3 class="text-lg font-semibold mb-2 text-beige">Summary</h3>
+          <p>${data.summary}</p>
+          <h3 class="text-lg font-semibold mt-4 mb-2 text-beige">Important Clauses</h3>
+          <ul class="list-disc ml-5">${Object.entries(data.clauses).map(([k, v]) => `<li><strong>${k}:</strong> ${v.join("; ")}</li>`).join("")}</ul>
+        `;
+
+        downloadBtn.style.display = "inline-block";
+
+      } catch (error) {
+        outputDiv.innerHTML = `<p class="italic text-center text-red-500">Error: ${error.message}</p>`;
+        downloadBtn.style.display = "none";
+      }
     });
-</script>
 
+    downloadBtn.addEventListener("click", () => {
+      if (!currentSummaryData) return;
+
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(18);
+      doc.text("Summary", 10, 20);
+
+      // Summary Text
+      doc.setFontSize(12);
+      const summaryLines = doc.splitTextToSize(currentSummaryData.summary, 180);
+      doc.text(summaryLines, 10, 30);
+
+      let currentY = 30 + summaryLines.length * 7 + 10;
+
+      // Clauses Title
+      doc.setFontSize(16);
+      doc.text("Important Clauses", 10, currentY);
+
+      currentY += 10;
+      doc.setFontSize(12);
+
+      // Clauses Content
+      for (const [key, value] of Object.entries(currentSummaryData.clauses)) {
+        const clauseText = `${key}: ${value.join("; ")}`;
+        const lines = doc.splitTextToSize(clauseText, 180);
+        if (currentY + lines.length * 7 > 280) {
+          doc.addPage();
+          currentY = 20;
+        }
+        doc.text(lines, 10, currentY);
+        currentY += lines.length * 7 + 5;
+      }
+
+      doc.save("summary.pdf");
+    });
+  </script>
 
 </body>
 </html>

@@ -1,38 +1,30 @@
-# Core Web Framework
-flask
+# Web Framework
+Flask
 flask-cors
 python-dotenv
 
-# PDF & OCR
+# PDF Processing & OCR
 pypdf
 pdf2image
 pytesseract
 
-# Text Utilities
+# Language Tools
 langdetect
 
-# AI Integrations
+# AI Integration
 huggingface_hub
 langchain
 langchain-community
 langchain-core
 langchain-groq
 langchain-ollama
-
-# Vector DB
-faiss-cpu
-
-# Optional (for Groq/OpenAI etc. if needed)
 openai
-
-#google-generative-ai
 google-generativeai
 
-# for case_finder
-Flask
-python-dotenv
+# Vector Database
+faiss-cpu
+
+# Web Scraping & Automation (for case finder)
 selenium
 webdriver-manager
 beautifulsoup4
-google-generativeai
-
