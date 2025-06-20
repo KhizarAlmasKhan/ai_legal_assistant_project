@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ai-legal-assistant
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: GOOGLE_API_KEY
+        value: your_api_key_here
+      - key: GEMINI_API_KEY
+        value: your_api_key_here
+      - key: TELEGRAM_TOKEN
+        value: your_bot_token
