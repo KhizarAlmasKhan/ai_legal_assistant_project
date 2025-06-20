@@ -30,3 +30,4 @@ webdriver-manager
 beautifulsoup4
 
 gunicorn
+PyMuPDF
