@@ -28,3 +28,5 @@ faiss-cpu
 selenium
 webdriver-manager
 beautifulsoup4
+
+gunicorn
