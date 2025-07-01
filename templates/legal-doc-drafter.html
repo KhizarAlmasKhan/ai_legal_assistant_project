@@ -173,59 +173,69 @@ function selectDocType(docType) {
   downloadBtn.style.display = 'none';
 
   const fields = fieldsByDocType[docType];
-  if (fields) {
-    form.classList.remove('hidden');
-    submitBtn.classList.remove('hidden');
 
-    fields.forEach(field => {
+  // ✅ Error check added
+  if (!fields || !Array.isArray(fields)) {
+    console.error(`❌ Invalid or missing docType: ${docType}`);
+    output.textContent = "⚠️ Error: Invalid document type selected.";
+    return;
+  }
+
+  form.classList.remove('hidden');
+  submitBtn.classList.remove('hidden');
+
+  fields.forEach(field => {
+    if (field && typeof field.id !== 'undefined') {
       const inputField = createInputField(field);
       form.appendChild(inputField);
-    });
+    } else {
+      console.warn("⚠️ Skipping invalid field object:", field);
+    }
+  });
 
-    submitBtn.onclick = async () => {
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+  submitBtn.onclick = async () => {
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const rawInputs = Object.fromEntries(formData);
+
+    output.textContent = "⏳ Generating document...";
+    downloadBtn.style.display = "none";
+
+    try {
+      const response = await fetch('/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: selectedDocType,
+          inputs: rawInputs
+        })
+      });
+
+      const result = await response.json();
+      output.textContent = result.document || result.error || "⚠️ No response.";
+
+      if (result.document) {
+        const blob = new Blob([result.document], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        downloadBtn.href = url;
+        downloadBtn.download = result.filename || `${selectedDocType}_document.doc`;
+        downloadBtn.style.display = "inline-block";
       }
 
-      const formData = new FormData(form);
-      const rawInputs = Object.fromEntries(formData);
+      form.reset();
+      form.classList.add('hidden');
+      submitBtn.classList.add('hidden');
 
-      output.textContent = "⏳ Generating document...";
+    } catch (error) {
+      console.error('❌ Error:', error);
+      output.textContent = "❌ Error generating document.";
       downloadBtn.style.display = "none";
-
-      try {
-        const response = await fetch('/draft', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: selectedDocType,
-            inputs: rawInputs
-          })
-        });
-
-        const result = await response.json();
-        output.textContent = result.document || result.error || "⚠️ No response.";
-
-        if (result.document) {
-          const blob = new Blob([result.document], { type: 'application/msword' });
-          const url = URL.createObjectURL(blob);
-          downloadBtn.href = url;
-          downloadBtn.download = result.filename || `${selectedDocType}_document.doc`;
-          downloadBtn.style.display = "inline-block";
-        }
-
-        form.reset();
-        form.classList.add('hidden');
-        submitBtn.classList.add('hidden');
-
-      } catch (error) {
-        console.error('❌ Error:', error);
-        output.textContent = "❌ Error generating document.";
-        downloadBtn.style.display = "none";
-      }
-    };
-  }
+    }
+  };
 }
 
 document.querySelectorAll(".doc-type-btn").forEach(btn => {
