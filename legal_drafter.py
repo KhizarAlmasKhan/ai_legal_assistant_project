@@ -1,4 +1,3 @@
-# legal_drafter.py
 from flask import Blueprint, request, jsonify
 import google.generativeai as genai
 import os
@@ -22,7 +21,10 @@ def draft():
         prompt = get_prompt(doc_type, inputs)
         print("🧠 Prompt sent to Gemini:\n", prompt)
         response = model.generate_content(prompt)
-        return jsonify({"document": response.text})
+        return jsonify({
+            "document": response.text,
+            "filename": f"{doc_type}_document.doc"
+        })
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
@@ -100,6 +102,5 @@ Generate a formal business Contract using the following inputs:
 
 Include essential sections like definitions, scope, responsibilities, liabilities, dispute resolution, termination, and signatures.
 """
-
     else:
         raise ValueError("Unsupported document type.")

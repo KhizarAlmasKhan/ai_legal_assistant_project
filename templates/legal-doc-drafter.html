@@ -59,6 +59,9 @@
     <form id="docForm" class="space-y-6 hidden" aria-live="polite"></form>
     <button id="submitBtn" class="mt-6 bg-accentgreen text-beige px-6 py-3 rounded-md hover:bg-green-700 transition hidden font-semibold" type="button">Generate Document</button>
     <div id="output" class="mt-10 bg-beige/10 p-6 rounded-lg text-beige text-sm whitespace-pre-wrap"></div>
+    <a id="downloadBtn" style="display: none;" class="mt-4 inline-block bg-beige text-darkgreen px-4 py-2 rounded-md hover:bg-white transition font-semibold" download>
+      ⬇️ Download Document
+    </a>
   </section>
 </main>
 
@@ -70,6 +73,7 @@
 const form = document.getElementById('docForm');
 const submitBtn = document.getElementById('submitBtn');
 const output = document.getElementById('output');
+const downloadBtn = document.getElementById("downloadBtn");
 let selectedDocType = null;
 
 const fieldsByDocType = {
@@ -166,6 +170,7 @@ function selectDocType(docType) {
   selectedDocType = docType;
   form.innerHTML = '';
   output.textContent = '';
+  downloadBtn.style.display = 'none';
 
   const fields = fieldsByDocType[docType];
   if (fields) {
@@ -187,6 +192,7 @@ function selectDocType(docType) {
       const rawInputs = Object.fromEntries(formData);
 
       output.textContent = "⏳ Generating document...";
+      downloadBtn.style.display = "none";
 
       try {
         const response = await fetch('/draft', {
@@ -201,12 +207,22 @@ function selectDocType(docType) {
         const result = await response.json();
         output.textContent = result.document || result.error || "⚠️ No response.";
 
+        if (result.document) {
+          const blob = new Blob([result.document], { type: 'application/msword' });
+          const url = URL.createObjectURL(blob);
+          downloadBtn.href = url;
+          downloadBtn.download = result.filename || `${selectedDocType}_document.doc`;
+          downloadBtn.style.display = "inline-block";
+        }
+
         form.reset();
         form.classList.add('hidden');
         submitBtn.classList.add('hidden');
+
       } catch (error) {
         console.error('❌ Error:', error);
         output.textContent = "❌ Error generating document.";
+        downloadBtn.style.display = "none";
       }
     };
   }
