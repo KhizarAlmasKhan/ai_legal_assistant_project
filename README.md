@@ -16,7 +16,7 @@ A smart, AI-powered web application that simplifies legal information access and
   Get answers to legal concepts in simple language using a conversational AI trained for legal assistance.
 
 - 📜 **Legal Document Drafter**  
-  Instantly generate professional legal documents (e.g., NDA, Contract, Will, Lease) by filling simple form inputs — all drafted using Gemini 2.5 Flash.
+  Instantly generate professional legal documents (e.g., NDA, Contract, Will, Lease) by filling simple form inputs — all drafted using Gemini 1.5 Flash
 
 - 🔍 **Legal Case Finder**  
   Search Indian Kanoon for real legal cases by topic or article (e.g., “Article 21 right to life”, “contract breach damages”) and view citations, previews, and full-text summaries.
@@ -35,7 +35,7 @@ A smart, AI-powered web application that simplifies legal information access and
 |--------------------------|-----------------------------------------------------------------|
 | **Flask**               | Backend API for all routes                                      |
 | **HTML + TailwindCSS**  | Clean, responsive frontend UI                                   |
-| **Google Gemini 2.5 Flash** | Unified AI model powering all core features                   |
+| **Google Gemini 1.5 Flash** | Unified AI model powering all core features                   |
 | **Tesseract OCR**       | Extracts text from scanned/image-based PDF pages                |
 | **LangDetect**          | Filters out non-English pages from legal PDFs                   |
 | **BeautifulSoup4**      | Scrapes Indian Kanoon for legal case data                       |
